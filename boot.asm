@@ -14,7 +14,7 @@ start:
     mov cl, 0x02            ; Specifies the sector to read. In this case two (2)
     mov dh, 0x00            ; Specifies the head number of the disk. In this case zero (0)
     mov dl, 0x00            ; Specifies the drive number. In this case zero (0) which typically is the first floppy drive (A:)
-    mov bx, unpack_buffer   ; The memory buffer where the read sector will be stored
+    lea bx, [unpack_buffer] ; The memory buffer where the read sector will be stored
     int 0x13                ; BIOS interrupt to read from disk
 
     jc  error               ; Jump to 'error' if reading failed (the carry flag (CF) is set)
@@ -24,14 +24,42 @@ start:
 error:
     hlt                     ; Halt the CPU
 
+; Unpacking routine (RLE + XOR decryption)
 unpack:
+    lea si, [unpack_buffer] ; Source (the packed and encrypted data)
+    mov di, 0x9000          ; Destination (the memory address to put the unpacked data)
+    mov bl, [xor_key]       ; Put the XOR key in BL
+
+next:
+    mov al, [si]            ; Load the next byte (the length)
+    inc si                  ; Move to the next byte (the byte to repeat)
+    cmp al, 0x00            ; Check if it's the end of the data
+    je  done                ; If 0, jump to 'done'
+
+    mov cl, al              ; CL now hold the length (repeat count)
+    mov al, [si]            ; Load the byte to repeat
+    inc si                  ; Move to the next byte (the length)
+    xor al, bl              ; Decrypt the byte to write
+
+repeat:
+    mov [di], al            ; Write the decrypted byte to memory
+    inc di                  ; Increment the position in memory
+    dec cl                  ; Decrement the length in CL
+    jnz repeat              ; Repeat until CL is zero
+
+    jmp next                ; Unpack next block
+
+done:
     ret
+
+
 
 ; Boot sector padding and signature
     times 510-($-$$) db 0   ; Pad the boot sector to 510 bytes (ensuring the total size is 512 bytes)
     dw 0xAA55               ; Boot sector signature (0xAA55), required for a valid bootable sector
 
 section .bss                ; The .bss section is used for uninitialized data
-
-unpack_buffer:
-    resb 512                ; Reserve 512 bytes for loading the packaged application
+unpack_buffer resb 512      ; Reserve 512 bytes for loading the packaged application
+    
+section .data               ; The .data section is used for initialized data
+xor_key db  0x69            ; XOR key for decryption
