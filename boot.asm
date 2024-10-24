@@ -21,6 +21,8 @@ start:
 
     call unpack             ; Jump to the unpacking routine to uncompress the main application
 
+    jmp 0x9000              ; Jump to the start of the unpacked application at address 0x9000
+
 error:
     hlt                     ; Halt the CPU
 
