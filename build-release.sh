@@ -32,6 +32,10 @@ FLOPPY_IMAGE="floppy.img"
 echo "Removing old build files..."
 rm -f "$FLOPPY_IMAGE" "$BOOTLOADER" "$APPLICATION" "$PACKED_APPLICATION"
 
+# Compile the packer
+echo "Compiling the packer..."
+gcc packer.c -o packer
+
 # Assemble bootloader and application
 echo "Assembling bootloader and application..."
 nasm -f bin boot.asm -o "$BOOTLOADER" || { echo "Bootloader assembly failed"; exit 1; }
