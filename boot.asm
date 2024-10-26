@@ -10,26 +10,26 @@
 ; Through extensive debugging, I have identified some key points for successful implementation:
 ;
 ; 1. Sector addressing misalignment:
-;    - BIOS uses 1-based indexing for sectors (set `cl` to `0x02` for sector 2),
+;    - BIOS uses 1-based indexing for sectors (set 'cl' to '0x02' for sector 2),
 ;      while the head and cylinder are 0-based. Misalignment here leads to loading
 ;      incorrect data or system halts
 ;
-; 2. `dd` command and `seek` misalignment:
-;    - When creating the floppy image with `dd`, set `seek=1` for writing to sector 2.
-;      Setting `seek=2` actually skips to sector 3, placing data incorrectly at 0x400 
+; 2. 'dd' command and 'seek' misalignment:
+;    - When creating the floppy image with 'dd', set 'seek=1' for writing to sector 2.
+;      Setting 'seek=2' actually skips to sector 3, placing data incorrectly at 0x400 
 ;      instead of 0x200
 ;
 ; 3. Proper segment register setup:
-;    - On boot, BIOS leaves segment registers in an undefined state. Setting `ds`,
-;      `es`, and `ss` to `0x0000` and `sp` to `0x7C00` is essential for stability
+;    - On boot, BIOS leaves segment registers in an undefined state. Setting 'ds',
+;      'es', and 'ss' to '0x0000' and 'sp' to '0x7C00' is essential for stability
 ;
 ; 4. Correct drive number handling:
-;    - BIOS provides the boot drive in `dl`, which must be saved and reused for
+;    - BIOS provides the boot drive in 'dl', which must be saved and reused for
 ;      subsequent disk reads. Hardcoding this value causes loading errors
 ;
 ; 5. Memory addressing for application:
-;    - Load the application to a specified address (e.g., `0x9000`). Use a far jump
-;      (`jmp 0x0000:0x9000`) to ensure `cs` and `ip` are set correctly, preventing
+;    - Load the application to a specified address (e.g., '0x9000'). Use a far jump
+;      ('jmp 0x0000:0x9000') to ensure 'cs' and 'ip' are set correctly, preventing
 ;      execution errors in the application
 ;
 ; 6. Debugging with visual feedback:
