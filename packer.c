@@ -1,13 +1,33 @@
 /*
  * packer.c
  * 
- * Description:
  * This program performs RLE (Run-Length Encoding) compression with XOR encryption 
  * to prepare an application binary file for use by a bootloader. The packed file 
  * contains compressed and encrypted data, making it ready for loading by the bootloader.
  * 
  * Author: Patrik Sporre
  * License: MIT License
+ * 
+ * Building and running:
+ * 
+ * 1. Build the packer:
+ *      gcc packer.c -o packer
+ * 
+ * 2. Run the packer with the input and output files specified:
+ *      ./packer <input file> <output file>
+ * 
+ *    Example:
+ *      ./packer application.bin application-packed.bin
+ * 
+ * This will produce the following output:
+ * 
+ * - Original size of the input file
+ * - Compressed size after RLE compression
+ * - Compression ratio as a percentage
+ * - Total sectors (512 bytes each) required after padding
+ * 
+ * Output file ('application-packed.bin' in this example) is created with RLE-compressed 
+ * and XOR-encrypted data, padded to the nearest 512-byte sector boundary.
  * 
  * MIT License
  * 
@@ -30,27 +50,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
- * Building and Running:
- * 
- * 1. Build the packer:
- *      gcc packer.c -o packer
- * 
- * 2. Run the packer with the input and output files specified:
- *      ./packer <input file> <output file>
- * 
- *    Example:
- *      ./packer application.bin application-packed.bin
- * 
- * This will produce the following output:
- * 
- * - Original size of the input file
- * - Compressed size after RLE compression
- * - Compression ratio as a percentage
- * - Total sectors (512 bytes each) required after padding
- * 
- * Output file (`application-packed.bin` in this example) is created with RLE-compressed 
- * and XOR-encrypted data, padded to the nearest 512-byte sector boundary.
  */
 
 #include <stdio.h>

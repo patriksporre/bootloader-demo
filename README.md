@@ -25,7 +25,7 @@ Email: [patriksporre@gmail.com](mailto:patriksporre@gmail.com)
 
 ## Key learnings and common pitfalls
 
-1. **Sector addressing**: BIOS uses 1-based indexing for sectors (`CL=0x02` for sector 2) but 0-based for cylinders 
+1. **Sector addressing**: BIOS uses 1-based indexing for sectors (`CL=0x02` for sector 2), but 0-based for cylinders 
    and heads
 2. **Data placement**: Writing to sector 2 (offset 0x200) requires setting `seek=1` with the `dd` command
 3. **Segment register setup**: Ensure `DS`, `ES`, and `SS` are set to `0x0000`, and `SP` to `0x7c00`

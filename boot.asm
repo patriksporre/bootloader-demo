@@ -18,7 +18,7 @@
 ;    - Using 'seek=2' skips to sector 3, leading to misaligned data at 0x400 instead of 0x200
 ;
 ; 3. Proper segment register setup:
-;    - BIOS initializes segment registers unpredictably; set 'ds', 'es', and 'ss' to '0x0000', and 'sp' to '0x7C00'
+;    - BIOS initializes segment registers unpredictably; set 'ds', 'es', and 'ss' to '0x0000', and 'sp' to '0x7c00'
 ;
 ; 4. Correct drive number handling:
 ;    - Store the boot drive number from 'dl' (provided by BIOS) to correctly access the boot disk
@@ -46,7 +46,7 @@
 ; - Initializes stack and segment registers for predictable behavior
 ; - Displays debug characters ('L', 'J', 'E', and 'U') for "Load," "Jump,", "Error", and "Unpack" stages
 ; - Loads application to memory address '0x9000'
-; - Pads the boot sector to 512 bytes and includes the 0xAA55 boot signature
+; - Pads the boot sector to 512 bytes and includes the 0xaa55 boot signature
 ; 
 ; MIT License:
 ; 
@@ -163,35 +163,35 @@ halt_loop:
 ;   4. Repeat until all bytes are written, or a zero repetition count signals the end
 ;------------------------------------------------------------------------------
 unpack:
-    mov si, LOAD_ADDR         ; Set source pointer to compressed data start
-    mov di, DECODE_ADDR       ; Set destination pointer to decompressed data start
-    mov bl, XOR_KEY           ; Load the XOR decryption key into BL
+    mov si, LOAD_ADDR       ; Set source pointer to compressed data start
+    mov di, DECODE_ADDR     ; Set destination pointer to decompressed data start
+    mov bl, XOR_KEY         ; Load the XOR decryption key into BL
 
 next:
-    mov al, [si]              ; Load the repetition count into AL
-    inc si                    ; Move to the byte to repeat
-    cmp al, 0x00              ; Check for end of data
-    je  done                  ; If zero, end unpacking
+    mov al, [si]            ; Load the repetition count into AL
+    inc si                  ; Move to the byte to repeat
+    cmp al, 0x00            ; Check for end of data
+    je  done                ; If zero, end unpacking
 
-    mov cl, al                ; Store repetition count in CL
-    mov al, [si]              ; Load the byte to repeat
-    inc si                    ; Move to the next RLE entry
-    xor al, bl                ; Decrypt the byte using XOR
+    mov cl, al              ; Store repetition count in CL
+    mov al, [si]            ; Load the byte to repeat
+    inc si                  ; Move to the next RLE entry
+    xor al, bl              ; Decrypt the byte using XOR
 
 repeat:
-    mov [es:di], al           ; Write the decrypted byte to memory at ES:DI
-    inc di                    ; Increment destination pointer
-    dec cl                    ; Decrement repetition counter
-    jnz repeat                ; Repeat until count reaches zero
+    mov [es:di], al         ; Write the decrypted byte to memory at ES:DI
+    inc di                  ; Increment destination pointer
+    dec cl                  ; Decrement repetition counter
+    jnz repeat              ; Repeat until count reaches zero
 
-    jmp next                  ; Move to the next block of RLE data
+    jmp next                ; Move to the next block of RLE data
 
 done:
-    ret                       ; Return to caller (unpacking complete)
+    ret                     ; Return to caller (unpacking complete)
 
 ; Boot sector padding and signature
     times 510-($-$$) db 0   ; Pad the boot sector to 510 bytes
-    dw 0xAA55               ; Boot sector signature (0xAA55), required for a bootable sector
+    dw 0xaa55               ; Boot sector signature (0xaa55), required for a bootable sector
 
 section .data               ; Data section
 
