@@ -11,6 +11,11 @@ bootloader development in a 16 bit real-mode environment.
 This project is designed to provide an easy-to-follow example for beginners interested in low-level programming 
 and bootloader development. Have fun exploring and experimenting with the code!
 
+## Author
+
+**Patrik Sporre**  
+Email: [patriksporre@gmail.com](mailto:patriksporre@gmail.com)
+
 ## Features
 
 - **Simple sector-based loading**: Loads a compressed and encrypted application from the floppy disk's second sector
