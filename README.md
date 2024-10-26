@@ -9,31 +9,38 @@ bootloader development in a 16 bit real-mode environment.
 ## Features
 
 - **Simple sector-based loading**: Loads a compressed and encrypted application from the floppy disk's second sector
-- **RLE Compression and XOR Encryption**: Compresses and encrypts the application binary for minimized disk usage
-- **Basic Debug Output**: Displays characters ('L', 'U', 'J', 'E') for debugging stages: Load, Unpack, Jump, and Error
-- **Far Jump Execution**: Loads and jumps to the application at a specific memory address, setting `CS` and `IP`
+- **RLE compression and XOR Encryption**: Compresses and encrypts the application binary for minimized disk usage
+- **Basic debug output**: Displays characters ('L', 'U', 'J', 'E') for debugging stages: Load, Unpack, Jump, and Error
+- **Far jump execution**: Loads and jumps to the application at a specific memory address, setting `CS` and `IP`
 
 ## Key learnings and common pitfalls
 
-1. **Sector Addressing**: BIOS uses 1-based indexing for sectors (`CL=0x02` for sector 2) but 0-based for cylinders 
+1. **Sector addressing**: BIOS uses 1-based indexing for sectors (`CL=0x02` for sector 2) but 0-based for cylinders 
    and heads
-2. **Data Placement**: Writing to sector 2 (offset 0x200) requires setting `seek=1` with the `dd` command
-3. **Segment Register Setup**: Ensure `DS`, `ES`, and `SS` are set to `0x0000`, and `SP` to `0x7C00`
-4. **Drive Number Handling**: Save the boot drive number (`DL`) provided by BIOS for accurate disk access
-5. **Memory Jumping**: Use far jumps (`jmp 0x0000:0x9000`) to set `CS` and `IP` correctly when jumping to the application
-6. **Debug Output**: Print characters to track the bootloader's progress through key stages
+2. **Data placement**: Writing to sector 2 (offset 0x200) requires setting `seek=1` with the `dd` command
+3. **Segment register setup**: Ensure `DS`, `ES`, and `SS` are set to `0x0000`, and `SP` to `0x7C00`
+4. **Drive number handling**: Save the boot drive number (`DL`) provided by BIOS for accurate disk access
+5. **Memory jumping**: Use far jumps (`jmp 0x0000:0x9000`) to set `CS` and `IP` correctly when jumping to the application
+6. **Debug output**: Print characters to track the bootloader's progress through key stages (if built using `build-debug.sh`)
 
 ## Usage
 
 ### Build and assemble
 
-1. **Setup**: Ensure `nasm`, `qemu`, and optionally `gcc` are installed for building and testing
-2. **Build**: Run the `build.sh` script, which assembles the bootloader and application, optionally compresses the 
-   application, and creates the floppy image
+1. **Setup**: Ensure `nasm`, `qemu`, and `gcc` are installed for building and testing. Make sure `build-release.sh`, `build-debug.sh`, `and makefloppy.sh` are executable.
+
+   ```bash
+   chmod +x build-release.sh
+   chmod +x build-debug.sh
+   chmod +x makefloppy.sh
+   ```
+
+2. **Build**: Run the `build-release.sh` script, which assembles the bootloader and application, compresses the 
+   application, creates the floppy image, and loads it in QEMU
 
    ```bash
    chmod +x build.sh
-   ./build.sh
+   ./build-release.sh
    ```
 
 3. **Pack**: Compress and encrypt the application using the `packer` utility, enabling compression 
@@ -47,20 +54,21 @@ Run the floppy image in QEMU to emulate the bootloader's behavior:
 qemu-system-x86_64 -drive file=floppy.img,format=raw,if=floppy,index=0 -boot a
 ```
 
+(Both `build-release.sh`, `build-debug.sh` starts the build image in QEMU.)
+
 ## Project files
 
-- **boot.asm**: Main bootloader file, handles loading and decompressing the application
-- **application.asm**: Secondary application loaded by the bootloader, displays output on-screen
-- **packer.c**: Utility for compressing and encrypting the application using RLE + XOR
-- **build.sh**: Script for building and assembling all project components
-- **makefloppy.sh**: Helper script to create the floppy disk image
+- **boot.asm**: Main bootloader file, handles loading and unpacking (decompressing and decrypting) the application
+- **application.asm**: The application loaded by the bootloader, displays output on-screen
+- **packer.c**: Utility for compressing and encrypting the application using RLE and XOR
+- **build-release.sh**: Script for building and assembling all project components in release mode
+- **build-debug.sh**: Script for building and assembling all project components in debug mode
+- **makefloppy.sh**: Helper script to create the floppy disk image (used by `build-release.sh` and `build-debug.sh`)
 
 ## Example workflow
 
-1. Write the bootloader and application in assembly
-2. (Optional) Pack the application using the `packer` utility
-3. Assemble and create the floppy image using `build.sh` or `makefloppy.sh`
-4. Test in QEMU
+1. Write the bootloader and application in assembly language
+2. Assemble, create the floppy, and run the image in QEMU by running `build-release.sh` or `build-debug.sh`
 
 ## License
 
