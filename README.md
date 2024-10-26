@@ -3,14 +3,19 @@
 
 This project contains a simple bootloader written in NASM assembly, designed to load a secondary application from a 
 specific sector on a floppy disk, decompress it with RLE (Run-Length Encoding) and XOR decryption, and jump to execute 
-it in memory. The bootloader is intended as an educational example, showcasing several foundational techniques for 
+it in memory.
+
+The bootloader is intended as an educational example, showcasing several foundational techniques for 
 bootloader development in a 16 bit real-mode environment.
+
+This project is designed to provide an easy-to-follow example for beginners interested in low-level programming 
+and bootloader development. Have fun exploring and experimenting with the code!
 
 ## Features
 
 - **Simple sector-based loading**: Loads a compressed and encrypted application from the floppy disk's second sector
 - **RLE compression and XOR Encryption**: Compresses and encrypts the application binary for minimized disk usage
-- **Basic debug output**: Displays characters ('L', 'U', 'J', 'E') for debugging stages: Load, Unpack, Jump, and Error
+- **Basic debug output**: Displays characters 'L', 'U', 'J', and 'E' for debugging stages: "Load", "Unpack", "Jump", and "Error"
 - **Far jump execution**: Loads and jumps to the application at a specific memory address, setting `CS` and `IP`
 
 ## Key learnings and common pitfalls
@@ -18,8 +23,8 @@ bootloader development in a 16 bit real-mode environment.
 1. **Sector addressing**: BIOS uses 1-based indexing for sectors (`CL=0x02` for sector 2) but 0-based for cylinders 
    and heads
 2. **Data placement**: Writing to sector 2 (offset 0x200) requires setting `seek=1` with the `dd` command
-3. **Segment register setup**: Ensure `DS`, `ES`, and `SS` are set to `0x0000`, and `SP` to `0x7C00`
-4. **Drive number handling**: Save the boot drive number (`DL`) provided by BIOS for accurate disk access
+3. **Segment register setup**: Ensure `DS`, `ES`, and `SS` are set to `0x0000`, and `SP` to `0x7c00`
+4. **Drive number handling**: Save the boot drive number (from `DL`) provided by BIOS for accurate disk access
 5. **Memory jumping**: Use far jumps (`jmp 0x0000:0x9000`) to set `CS` and `IP` correctly when jumping to the application
 6. **Debug output**: Print characters to track the bootloader's progress through key stages (if built using `build-debug.sh`)
 
@@ -97,8 +102,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
----
-
-This project is designed to provide an easy-to-follow example for beginners interested in low-level programming 
-and bootloader development. Have fun exploring and experimenting with the code!
