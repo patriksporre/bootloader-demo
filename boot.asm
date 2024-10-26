@@ -27,7 +27,7 @@
 ;    - Load the application to address '0x9000' and use a far jump ('jmp 0x0000:0x9000') to set 'cs' and 'ip' correctly
 ;
 ; 6. Debugging with visual feedback:
-;    - Displaying 'L', 'J', and 'E' for "Load", "Jump", and "Error" helps to track the bootloader’s progress
+;    - Displaying 'L', 'J', 'E', and 'U' for "Load", "Jump", "Error", and "Unpack" helps to track the bootloader’s progress
 ;
 ; Usage:
 ; - Assemble this bootloader using NASM:
@@ -44,10 +44,9 @@
 ; 
 ; Features:
 ; - Initializes stack and segment registers for predictable behavior
-; - Displays debug characters ('L', 'J', and 'E') for "Load," "Jump," and "Error" stages
+; - Displays debug characters ('L', 'J', 'E', and 'U') for "Load," "Jump,", "Error", and "Unpack" stages
 ; - Loads application to memory address '0x9000'
 ; - Pads the boot sector to 512 bytes and includes the 0xAA55 boot signature
-; 
 ; 
 ; MIT License:
 ; 
@@ -74,6 +73,10 @@
 BITS 16                     ; Instruct NASM that this is 16 bit (real mode) code
 org 0x7c00                  ; Origin where BIOS loads the bootloader
 
+%define LOAD_ADDR   0x9000  ; Destination address for our compressed application
+%define DECODE_ADDR 0xa000  ; Destination address for our unpacked application
+%define XOR_KEY     0x69    ; XOR decryption key
+
 section .text               ; Code section
 
 start:
@@ -88,10 +91,12 @@ start:
     mov sp, 0x7c00          ; Set SP (stack pointer) to 0x7c00 (stack grows downwards)
     sti                     ; Enable interrupts
 
+%ifdef DEBUG
     ; Display 'L' for loading stage
     mov ah, 0x0e            
     mov al, 'L'             
     int 0x10                ; Display 'L' to confirm load phase
+%endif
 
     ; Load the main application from sector 1 (0-based) of the floppy disk
     mov ah, 0x02            ; BIOS function to read sectors
@@ -100,28 +105,91 @@ start:
     mov cl, 0x02            ; Sector number (2 in 1-based indexing) <!-- IMPORTANT!
     mov dh, 0x00            ; Head number (0)
     mov dl, [boot_drive]    ; Boot drive number (passed by BIOS)
-    mov bx, 0x9000          ; Destination memory for the read (0x9000)
+    mov bx, LOAD_ADDR       ; Destination memory for the read
     int 0x13                ; Interrupt to read sector
 
     jc error                ; Jump to 'error' if reading failed
 
+%ifdef DEBUG
+    ; Display 'U' for unpack stage
+    mov ah, 0x0e
+    mov al, 'U'
+    int 0x10
+%endif
+
+    ; Call 'unpack' to decrompress and decrypt
+    call unpack
+
+%ifdef DEBUG
     ; Display 'J' for jump stage
     mov ah, 0x0e
     mov al, 'J'
     int 0x10                ; Display 'J' before jumping to application
+%endif
 
-    ; Far jump to application loaded at 0x9000
-    jmp 0x0000:0x9000       ; Set CS and IP correctly with far jump
+    ; Far jump to application loaded at DECODE_ADDR
+    jmp 0x0000:DECODE_ADDR  ; Set CS and IP correctly with far jump
 
 error:
+%ifdef DEBUG
     ; Display 'E' for error
     mov ah, 0x0e
     mov al, 'E'
     int 0x10                ; Display error indicator
+%endif
 
 halt_loop:
     hlt                     ; Halt in case of error
     jmp halt_loop           ; Infinite loop on error
+
+;------------------------------------------------------------------------------
+; Unpack - Decompresses and decrypts the loaded application data
+; 
+; This function performs RLE (Run-Length Encoding) decompression with XOR 
+; decryption to restore the application to its original form before execution.
+; The packed and encrypted data is loaded into memory at LOAD_ADDR by the 
+; bootloader and is unpacked to DECODE_ADDR, ready for execution.
+;
+; Registers used:
+;   - SI: Source pointer, initially set to LOAD_ADDR (compressed and encrypted data)
+;   - DI: Destination pointer, initially set to DECODE_ADDR (decompressed data)
+;   - BL: XOR key used for decryption (constant value XOR_KEY)
+;   - CL: Counter for RLE decompression (number of bytes to write)
+;
+; Process:
+;   1. Read the repetition count and byte to repeat from the compressed data
+;   2. Apply XOR decryption to the byte
+;   3. Write the decrypted byte to the destination address DI
+;   4. Repeat until all bytes are written, or a zero repetition count signals the end
+;
+;------------------------------------------------------------------------------
+
+unpack:
+    mov si, LOAD_ADDR         ; Set source pointer to compressed data start
+    mov di, DECODE_ADDR       ; Set destination pointer to decompressed data start
+    mov bl, XOR_KEY           ; Load the XOR decryption key into BL
+
+next:
+    mov al, [si]              ; Load the repetition count into AL
+    inc si                    ; Move to the byte to repeat
+    cmp al, 0x00              ; Check for end of data
+    je  done                  ; If zero, end unpacking
+
+    mov cl, al                ; Store repetition count in CL
+    mov al, [si]              ; Load the byte to repeat
+    inc si                    ; Move to the next RLE entry
+    xor al, bl                ; Decrypt the byte using XOR
+
+repeat:
+    mov [es:di], al           ; Write the decrypted byte to memory at ES:DI
+    inc di                    ; Increment destination pointer
+    dec cl                    ; Decrement repetition counter
+    jnz repeat                ; Repeat until count reaches zero
+
+    jmp next                  ; Move to the next block of RLE data
+
+done:
+    ret                       ; Return to caller (unpacking complete)
 
 ; Boot sector padding and signature
     times 510-($-$$) db 0   ; Pad the boot sector to 510 bytes
