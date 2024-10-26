@@ -161,9 +161,7 @@ halt_loop:
 ;   2. Apply XOR decryption to the byte
 ;   3. Write the decrypted byte to the destination address DI
 ;   4. Repeat until all bytes are written, or a zero repetition count signals the end
-;
 ;------------------------------------------------------------------------------
-
 unpack:
     mov si, LOAD_ADDR         ; Set source pointer to compressed data start
     mov di, DECODE_ADDR       ; Set destination pointer to decompressed data start
