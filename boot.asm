@@ -7,50 +7,47 @@
 ; into memory and then jumps to execute it. It is designed to be minimalistic and primarily used 
 ; for educational purposes or as a foundation for more advanced bootloader development.
 ; 
-; Through extensive debugging, I have identified some key points for successful implementation:
+; Key learnings and common pitfalls:
 ;
 ; 1. Sector addressing misalignment:
-;    - BIOS uses 1-based indexing for sectors (set 'cl' to '0x02' for sector 2),
-;      while the head and cylinder are 0-based. Misalignment here leads to loading
-;      incorrect data or system halts
+;    - BIOS uses 1-based indexing for sectors ('cl' should be '0x02' for sector 2), while the head and cylinder are 0-based
+;    - Misalignment here leads to incorrect data loading or system halts
 ;
 ; 2. 'dd' command and 'seek' misalignment:
-;    - When creating the floppy image with 'dd', set 'seek=1' for writing to sector 2.
-;      Setting 'seek=2' actually skips to sector 3, placing data incorrectly at 0x400 
-;      instead of 0x200
+;    - For creating the floppy image with 'dd', use 'seek=1' to write to sector 2
+;    - Using 'seek=2' skips to sector 3, leading to misaligned data at 0x400 instead of 0x200
 ;
 ; 3. Proper segment register setup:
-;    - On boot, BIOS leaves segment registers in an undefined state. Setting 'ds',
-;      'es', and 'ss' to '0x0000' and 'sp' to '0x7C00' is essential for stability
+;    - BIOS initializes segment registers unpredictably; set 'ds', 'es', and 'ss' to '0x0000', and 'sp' to '0x7C00'
 ;
 ; 4. Correct drive number handling:
-;    - BIOS provides the boot drive in 'dl', which must be saved and reused for
-;      subsequent disk reads. Hardcoding this value causes loading errors
+;    - Store the boot drive number from 'dl' (provided by BIOS) to correctly access the boot disk
 ;
 ; 5. Memory addressing for application:
-;    - Load the application to a specified address (e.g., '0x9000'). Use a far jump
-;      ('jmp 0x0000:0x9000') to ensure 'cs' and 'ip' are set correctly, preventing
-;      execution errors in the application
+;    - Load the application to address '0x9000' and use a far jump ('jmp 0x0000:0x9000') to set 'cs' and 'ip' correctly
 ;
 ; 6. Debugging with visual feedback:
-;    - Adding character output ('L' for load, 'J' for jump, 'E' for error) helps 
-;      visualize bootloader progression and debug issues quickly
+;    - Displaying 'L', 'J', and 'E' for "Load", "Jump", and "Error" helps to track the bootloader’s progress
 ;
 ; Usage:
 ; - Assemble this bootloader using NASM:
 ;     nasm -f bin boot.asm -o boot.bin
 ;
-; - The assembled bootloader (boot.bin) can then be written to the first sector of a floppy image 
-;   using a script or direct dd command:
+; - Write the assembled bootloader to the first sector of a floppy image using a script or direct dd command:
 ;     dd if=boot.bin of=floppy.img bs=512 count=1 conv=notrunc
 ;
 ; - This bootloader expects an application to be placed in the second sector of the floppy (offset 0x200)
+;
+; Example QEMU Test:
+; - To test with QEMU, run:
+;     qemu-system-x86_64 -drive file=floppy.img,format=raw,if=floppy,index=0 -boot a
 ; 
 ; Features:
-; - Initializes stack and segment registers to ensure predictable behavior
+; - Initializes stack and segment registers for predictable behavior
 ; - Displays debug characters ('L', 'J', and 'E') for "Load," "Jump," and "Error" stages
-; - Jumps to the loaded application at memory address 0x9000
-; - Pads the boot sector to 512 bytes and ends with the 0xAA55 boot signature
+; - Loads application to memory address '0x9000'
+; - Pads the boot sector to 512 bytes and includes the 0xAA55 boot signature
+; 
 ; 
 ; MIT License:
 ; 
