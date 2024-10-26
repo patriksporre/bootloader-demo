@@ -1,42 +1,53 @@
-BITS 16                     ; Instruct NASM that this is 16 bit (real mode) code
-org 0x9000                  ; Set the origin to 0x9000 which is where the bootloader will put it
+; application.asm
+;
+; This simple application displays the text "hello!" on the screen using BIOS teletype interrupts 
+; and then halts the CPU. It is designed to run after being loaded by a bootloader and demonstrates 
+; the basics of BIOS video interrupts for text output in real mode.
+;
+; Usage:
+; - This program should be loaded to memory at address 0xa000 (specified by 'org 0xa000') and
+;   executed directly. It assumes the system is in 16 bit real mode with video services enabled
+;
+; Requirements:
+; - 16 bit real mode (e.g., in an emulator or a 16- bit capable system)
+; - Loaded by a bootloader that sets up segments correctly and jumps to 0a000
+;
+; Author: Patrik Sporre
+; License: MIT License
+
+BITS 16                       ; Instruct NASM that this code is 16-bit (real mode)
+org 0xa000                    ; Set origin to 0xA000, where this application is loaded by the bootloader
+
+section .text                 ; Code section
 
 start:
-    mov ax, 0xb800          ; Set AX to the video memory segment (0xb800)
-    mov es, ax              ; Load ES with the video memory segment
-    
-    xor di, di              ; Start at the beginning of the video memory (offset 0)
-    mov cx, 2000            ; 80 characters wide and 25 characters tall
+    ; Display the string "hello!" on the screen, character by character
+    mov ah, 0x0e              ; Set AH to 0x0E - BIOS teletype function (for character output)
 
-clearscreen:
-    mov byte [es:di], 0x20  ; Write character (space character) to video memory at ES:DI
-    inc di                  ; Move to next byte (the attribute)
+    ; Display 'h'
+    mov al, 'h'               ; Load ASCII value of 'h' into AL
+    int 0x10                  ; BIOS interrupt to display character in AL
 
-    mov byte [es:di], 0x07  ; Write attribute (light gray on black) to video memory at ES:DI
-    inc di                  ; Move to the next byte (the character)
+    ; Display 'e'
+    mov al, 'e'               ; Load ASCII value of 'e' into AL
+    int 0x10                  ; BIOS interrupt to display character in AL
 
-    dec cx                  ; Decrement CX
-    jnz clearscreen         ; Jump to 'clearscreen' if CX is not zero
+    ; Display 'l'
+    mov al, 'l'               ; Load ASCII value of 'l' into AL
+    int 0x10                  ; BIOS interrupt to display character in AL
 
-    lea si, [message]       ; Load the effective address of 'message' into SI
-    xor di, di              ; Start at the beginning of the video memory (offset 0)
+    ; Display 'l'
+    mov al, 'l'               ; Load ASCII value of 'l' into AL
+    int 0x10                  ; BIOS interrupt to display character in AL
 
-printchar:
-    mov al, [si]            ; Load the next byte from [SI] into AL
-    cmp al, 0               ; Compare the byte with 0 (the null terminator)
-    je end                  ; If the byte is 0 jump to 'end'
+    ; Display 'o'
+    mov al, 'o'               ; Load ASCII value of 'o' into AL
+    int 0x10                  ; BIOS interrupt to display character in AL
 
-    mov [es:di], al         ; Write character to video memory at ES:DI
-    inc di                  ; Move to next byte (the attribute)
+    ; Display '!'
+    mov al, '!'               ; Load ASCII value of '!' into AL
+    int 0x10                  ; BIOS interrupt to display character in AL
 
-    mov byte [es:di], 0x07  ; Attribute byte (light gray on black)
-    inc di                  ; Move to the next byte (the character)
-
-    inc si                  ; Move to the next character
-
-    jmp printchar           ; Repeat for the next character
-
-end:
-    hlt                     ; Halt the CPU
-
-message db 'Hello World', 0 ; The 'Hello World' message followed by a null terminator (0)
+    ; Halt the CPU
+    cli                       ; Disable interrupts to prevent further interrupt handling
+    hlt                       ; Halt the CPU indefinitely
