@@ -37,7 +37,7 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
-BITS 16                     ; Instruct NASM that this code is 16-bit (real mode)
+bits 16                     ; Instruct NASM that this code is 16-bit (real mode)
 org 0xa000                  ; Set origin to 0xA000, where this application is loaded by the bootloader
 
 section .text               ; Code section

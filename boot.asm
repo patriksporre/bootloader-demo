@@ -70,7 +70,7 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
-BITS 16                     ; Instruct NASM that this is 16 bit (real mode) code
+bits 16                     ; Instruct NASM that this is 16 bit (real mode) code
 org 0x7c00                  ; Origin where BIOS loads the bootloader
 
 %define LOAD_ADDR   0x9000  ; Destination address for our compressed application
